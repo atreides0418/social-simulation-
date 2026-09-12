@@ -121,11 +121,13 @@ p.body strong{color:var(--ink);font-weight:700}
 .w3{width:430px;height:430px;left:52%;top:30%;background:rgba(176,102,42,.09);animation:drift1 32s ease-in-out infinite reverse}
 @keyframes drift1{0%,100%{transform:translate(0,0)}50%{transform:translate(56px,-42px)}}
 @keyframes drift2{0%,100%{transform:translate(0,0)}50%{transform:translate(-50px,38px)}}
-.hero-badge{display:inline-flex;align-items:center;gap:10px;padding:9px 18px;border-radius:100px;
+.hero-badge{display:inline-flex;align-items:center;gap:10px;padding:8px 18px 8px 14px;border-radius:100px;
   border:1px solid var(--line-2);background:rgba(255,255,255,.85);color:var(--ink-2);
   font-size:13px;font-weight:600;margin-bottom:36px;width:fit-content;box-shadow:var(--sh1)}
 .hero-badge i{width:7px;height:7px;border-radius:50%;background:var(--acc);font-style:normal;
   box-shadow:0 0 0 4px rgba(15,124,107,.14);animation:blink 2.4s ease-in-out infinite}
+.hero-badge .badge-tag{display:inline-block;background:var(--acc);color:#fff;font-weight:800;
+  font-size:11.5px;letter-spacing:.03em;padding:5px 12px;border-radius:100px}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
 .hero h1{font-weight:800;letter-spacing:-.055em;line-height:1.02;color:var(--ink);
   font-size:clamp(3.3rem,7vw,6.5rem)}
@@ -471,10 +473,10 @@ svg .anim{stroke-dasharray:1400;stroke-dashoffset:1400;transition:stroke-dashoff
     <div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div>
   </div>
   <div class="wrap">
-    <div class="hero-badge rv"><i></i> 5년 뒤의 AI 서비스 기획</div>
+    <div class="hero-badge rv"><i></i><span class="badge-tag">해커톤 주제</span> 5년 뒤의 AI 서비스 기획</div>
     <h1 class="rv">사회 시뮬레이션<span class="sub">SOCIETY SIMULATION · 가칭</span></h1>
     <p class="lead rv">정책을 실제로 시행하기 전에, <em>그 정책이 적용된 가상의 사회</em>를 먼저 돌려보고<br>어떤 변화가 일어나는지 미리 확인하는 서비스.</p>
-    <p class="credit rv">17기 한지윤, 홈스쿨링</p>
+    <p class="credit rv">KAIST 17기 한지윤</p>
     <div class="hero-meta rv">
       <div class="hm"><b>WHO</b><span>정책 담당자 — 그리고 그 정책 아래 사는 시민</span></div>
       <div class="hm"><b>WHEN</b><span>연산 비용과 검증 데이터가 만나는 2031년</span></div>
