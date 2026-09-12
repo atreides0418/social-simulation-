@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>사회 시뮬레이션 — 정책을 시행하기 전에, 먼저 돌려봅니다</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════ tokens ═══════════════ */
+:root{
+  --paper:#F7F7F4;
+  --paper-2:#EFEFE9;
+  --white:#FFFFFF;
+  --ink:#14161C;
+  --ink-2:#3D4452;
+  --ink-3:#767D8B;
+  --ink-4:#9CA2AE;
+  --line:#E5E5DE;
+  --line-2:#D6D6CD;
+  --acc:#0F7C6B;
+  --acc-d:#0A5E51;
+  --acc-l:#39A793;
+  --acc-t:#E7F3F0;
+  --ind:#3A56C9;
+  --ind-t:#EBEEFB;
+  --clay:#B0662A;
+  --clay-t:#FAF1E5;
+  --f:'Pretendard Variable',Pretendard,'Noto Sans KR','Malgun Gothic',-apple-system,BlinkMacSystemFont,sans-serif;
+  --sh1:0 1px 2px rgba(20,22,28,.05);
+  --sh2:0 2px 4px rgba(20,22,28,.04),0 14px 34px -20px rgba(20,22,28,.3);
+  --sh3:0 3px 8px rgba(20,22,28,.05),0 40px 80px -46px rgba(15,124,107,.75);
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--paper);color:var(--ink-2);
+  font-family:var(--f);font-weight:400;font-size:17px;line-height:1.9;
+  letter-spacing:-.015em;font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+::selection{background:rgba(15,124,107,.16)}
+::-webkit-scrollbar{width:10px}
+::-webkit-scrollbar-track{background:var(--paper-2)}
+::-webkit-scrollbar-thumb{background:#CFCFC5;border-radius:10px;border:2px solid var(--paper-2)}
+::-webkit-scrollbar-thumb:hover{background:#B8B8AC}
+
+/* ═══════════════ chrome ═══════════════ */
+#progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:60;
+  background:linear-gradient(90deg,var(--ind),var(--acc));border-radius:0 3px 3px 0}
+
+#nav{position:fixed;right:30px;top:50%;transform:translateY(-50%);z-index:55;
+  display:flex;flex-direction:column;align-items:flex-end}
+#nav a{display:flex;align-items:center;justify-content:flex-end;gap:12px;text-decoration:none;
+  padding:11px 4px 11px 20px;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  color:var(--ink-4);font-weight:600;letter-spacing:-.01em;transition:color .3s}
+#nav a .lb{opacity:0;transform:translateX(8px);transition:all .35s var(--ease);
+  white-space:nowrap;font-size:12.5px;line-height:1;
+  background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border:1px solid var(--line);
+  border-radius:100px;padding:7px 14px;box-shadow:var(--sh1)}
+#nav a .tick{width:22px;height:2px;border-radius:2px;background:currentColor;opacity:.4;
+  transition:all .35s var(--ease);flex:none}
+#nav a:hover,#nav a:focus-visible,#nav a.act{color:var(--acc);outline:none}
+#nav a:hover .lb,#nav a:focus-visible .lb,#nav a.act .lb{opacity:1;transform:none}
+#nav a:hover .tick{width:34px;opacity:.8}
+#nav a.act .tick{width:40px;opacity:1;box-shadow:0 0 0 3px rgba(15,124,107,.12)}
+#nav a:active .tick{width:44px}
+
+#keyhint{position:fixed;left:34px;bottom:28px;z-index:55;color:var(--ink-4);
+  font-size:12px;font-weight:500;letter-spacing:0;
+  background:rgba(255,255,255,.72);backdrop-filter:blur(8px);
+  border:1px solid var(--line);border-radius:100px;padding:9px 18px;box-shadow:var(--sh1)}
+#keyhint b{color:var(--ink-2);font-weight:700}
+
+/* ═══════════════ layout ═══════════════ */
+.wrap{width:100%;max-width:1240px;margin:0 auto;padding:0 80px;position:relative;z-index:2}
+section.chapter{position:relative;padding:160px 0 180px;overflow:hidden;border-top:1px solid var(--line)}
+.s-white{background:var(--white)}
+.s-paper{background:var(--paper)}
+.ghost{position:absolute;top:60px;right:2.5vw;font-size:clamp(15rem,26vw,27rem);line-height:.78;
+  font-weight:800;letter-spacing:-.06em;color:var(--ink);opacity:.035;pointer-events:none;user-select:none}
+
+.chead{margin-bottom:72px}
+.cnum{display:inline-flex;align-items:center;gap:13px;font-size:12px;font-weight:700;
+  letter-spacing:.18em;color:var(--acc);margin-bottom:22px}
+.cnum::before{content:'';width:26px;height:2px;border-radius:2px;background:var(--acc)}
+.chead h2{font-weight:800;letter-spacing:-.045em;line-height:1.16;color:var(--ink);
+  font-size:clamp(2.7rem,4.6vw,4.3rem)}
+.ckick{margin-top:20px;color:var(--ink-3);font-size:1.14rem;font-weight:400;max-width:790px;line-height:1.8}
+.ckick strong{color:var(--ink);font-weight:700}
+
+p.body{font-size:1.1rem;line-height:2.05;color:var(--ink-2);font-weight:400;max-width:880px}
+p.body + p.body{margin-top:1.4em}
+p.body strong{color:var(--ink);font-weight:700}
+.mark{color:var(--acc);font-weight:700}
+.mark-w{color:var(--clay);font-weight:700}
+.hl{background:linear-gradient(180deg,transparent 62%,rgba(15,124,107,.16) 62%);font-weight:600;color:var(--ink)}
+
+.eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.16em;color:var(--acc);
+  text-transform:uppercase;margin-bottom:18px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+
+.rv{opacity:0;transform:translateY(28px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.rv.in{opacity:1;transform:none}
+
+/* ═══════════════ hero ═══════════════ */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+  position:relative;overflow:hidden;padding:120px 0;background:var(--paper)}
+.hero-bg{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.hero-bg .dots{position:absolute;inset:0;
+  background-image:radial-gradient(#C9C9BE 1.1px,transparent 1.1px);background-size:34px 34px;opacity:.55;
+  -webkit-mask-image:radial-gradient(72% 62% at 50% 44%,#000 0%,transparent 76%);
+          mask-image:radial-gradient(72% 62% at 50% 44%,#000 0%,transparent 76%)}
+.wash{position:absolute;border-radius:50%;filter:blur(80px)}
+.w1{width:660px;height:660px;left:-6%;top:-6%;background:rgba(58,86,201,.13);animation:drift1 24s ease-in-out infinite}
+.w2{width:600px;height:600px;right:-5%;bottom:-10%;background:rgba(15,124,107,.15);animation:drift2 28s ease-in-out infinite}
+.w3{width:430px;height:430px;left:52%;top:30%;background:rgba(176,102,42,.09);animation:drift1 32s ease-in-out infinite reverse}
+@keyframes drift1{0%,100%{transform:translate(0,0)}50%{transform:translate(56px,-42px)}}
+@keyframes drift2{0%,100%{transform:translate(0,0)}50%{transform:translate(-50px,38px)}}
+.hero-badge{display:inline-flex;align-items:center;gap:10px;padding:9px 18px;border-radius:100px;
+  border:1px solid var(--line-2);background:rgba(255,255,255,.85);color:var(--ink-2);
+  font-size:13px;font-weight:600;margin-bottom:36px;width:fit-content;box-shadow:var(--sh1)}
+.hero-badge i{width:7px;height:7px;border-radius:50%;background:var(--acc);font-style:normal;
+  box-shadow:0 0 0 4px rgba(15,124,107,.14);animation:blink 2.4s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+.hero h1{font-weight:800;letter-spacing:-.055em;line-height:1.02;color:var(--ink);
+  font-size:clamp(3.3rem,7vw,6.5rem)}
+.hero h1 .sub{display:block;font-size:.2em;font-weight:600;letter-spacing:.3em;
+  color:var(--ink-4);margin-top:24px}
+.hero .lead{margin-top:42px;max-width:840px;font-size:1.4rem;line-height:1.9;
+  color:var(--ink-2);font-weight:400;letter-spacing:-.025em}
+.hero .lead em{font-style:normal;color:var(--acc);font-weight:700}
+.hero .credit{margin-top:18px;font-size:1.1rem;font-weight:800;color:var(--ink-2);letter-spacing:-.02em}
+.hero-meta{margin-top:60px;display:flex;gap:20px;flex-wrap:wrap}
+.hm{background:rgba(255,255,255,.8);border:1px solid var(--line);border-radius:14px;
+  padding:18px 24px;box-shadow:var(--sh1)}
+.hm b{display:block;font-size:11.5px;font-weight:700;letter-spacing:.14em;color:var(--acc);margin-bottom:7px}
+.hm span{font-size:1rem;color:var(--ink-2);font-weight:500}
+.scrollcue{position:absolute;left:80px;bottom:48px;display:flex;align-items:center;gap:14px;
+  color:var(--ink-4);font-size:11.5px;font-weight:600;letter-spacing:.16em}
+.scrollcue .bar{width:2px;height:50px;border-radius:2px;background:var(--line-2);position:relative;overflow:hidden}
+.scrollcue .bar::after{content:'';position:absolute;left:0;top:-50px;width:2px;height:50px;
+  border-radius:2px;background:var(--acc);animation:cue 2.6s ease-in-out infinite}
+@keyframes cue{0%{transform:translateY(0)}100%{transform:translateY(100px)}}
+
+/* ═══════════════ ch1 ═══════════════ */
+.oneway{margin-top:66px}
+.ow{background:var(--white);border:1px solid var(--line);border-radius:18px;
+  padding:30px 28px 26px;box-shadow:var(--sh1);transition:transform .4s var(--ease),box-shadow .4s var(--ease)}
+.ow:hover{transform:translateY(-4px);box-shadow:var(--sh2)}
+.ow .tag{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.1em;
+  color:var(--clay);background:var(--clay-t);border-radius:100px;padding:6px 13px;margin-bottom:22px}
+.ow .step{font-size:1.05rem;color:var(--ink);font-weight:700;line-height:1.55}
+.ow .arrow{height:30px;display:flex;align-items:center;color:#D9BE97;margin:5px 0 5px 2px}
+.ow .res{margin-top:11px;font-size:.96rem;color:var(--ink-3);font-weight:400;line-height:1.75}
+.ow .back{margin-top:22px;padding-top:16px;border-top:1px dashed var(--line-2);
+  display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--clay)}
+.quote{margin-top:72px;padding:48px 54px;border-radius:22px;position:relative;overflow:hidden;
+  background:linear-gradient(120deg,var(--clay-t),#FFFDF9);border:1px solid #EDDFC9}
+.quote::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--clay)}
+.quote p{font-size:1.62rem;line-height:1.75;letter-spacing:-.04em;font-weight:600;color:var(--ink)}
+.quote p b{color:var(--clay);font-weight:800}
+.quote.teal{background:linear-gradient(120deg,var(--acc-t),#FAFEFD);border-color:#CFE7E1}
+.quote.teal::before{background:var(--acc)}
+.quote.teal p b{color:var(--acc)}
+.hist-head{margin-top:76px}
+.hist-title{margin-top:8px;font-size:clamp(1.7rem,2.4vw,2.1rem);font-weight:800;
+  letter-spacing:-.035em;color:var(--ink);line-height:1.3}
+.hist-grid{margin-top:34px}
+.hist{background:var(--white);border:1px solid var(--line);border-radius:18px;
+  padding:32px 28px 28px;box-shadow:var(--sh1);height:100%;display:flex;flex-direction:column;
+  transition:transform .4s var(--ease),box-shadow .4s var(--ease)}
+.hist:hover{transform:translateY(-4px);box-shadow:var(--sh2)}
+.hist .meta{display:inline-flex;width:fit-content;font-size:11.5px;font-weight:700;
+  letter-spacing:.06em;color:var(--clay);background:var(--clay-t);border-radius:100px;
+  padding:6px 13px;margin-bottom:20px}
+.hist h4{font-size:1.28rem;font-weight:800;letter-spacing:-.03em;color:var(--ink);
+  margin-bottom:13px;line-height:1.4}
+.hist p{font-size:.96rem;line-height:1.85;color:var(--ink-2)}
+.hist .foot{margin-top:22px;padding-top:16px;border-top:1px dashed var(--line-2);
+  font-size:.87rem;font-style:italic;color:var(--ink-3);line-height:1.65}
+
+/* ═══════════════ ch2 ═══════════════ */
+.statement{font-size:clamp(1.75rem,2.8vw,2.55rem);line-height:1.66;letter-spacing:-.045em;
+  font-weight:700;color:var(--ink);max-width:1020px}
+.statement b{color:var(--acc);font-weight:800}
+.two-track{margin-top:70px;display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.track{border-radius:20px;padding:36px 34px 32px;background:var(--white);
+  border:1px solid var(--line);box-shadow:var(--sh1)}
+.track.sim{border-color:#BFDED7;box-shadow:var(--sh3);background:linear-gradient(170deg,#F4FBF9,#fff 60%)}
+.track h5{font-size:12px;font-weight:700;letter-spacing:.14em;margin-bottom:26px;color:var(--ink-4)}
+.track.real h5{color:var(--clay)}
+.track.sim h5{color:var(--acc)}
+.chain{display:flex;align-items:center;gap:11px;flex-wrap:wrap}
+.node{padding:11px 17px;border-radius:10px;border:1px solid var(--line-2);background:var(--paper);
+  font-size:.95rem;color:var(--ink);font-weight:600;white-space:nowrap}
+.track.sim .node{border-color:#BFDED7;background:var(--acc-t);color:var(--acc-d)}
+.chain .ar{color:var(--ink-4);font-weight:700}
+.track .note{margin-top:24px;font-size:.98rem;color:var(--ink-3);line-height:1.8}
+.track .loop{margin-top:20px;display:inline-flex;align-items:center;gap:8px;padding:9px 15px;
+  border-radius:100px;font-size:12.5px;font-weight:600}
+.track.sim .loop{background:var(--acc-t);color:var(--acc-d)}
+.track.real .loop{background:var(--clay-t);color:var(--clay)}
+
+/* ═══════════════ ch3 ═══════════════ */
+.limits{margin-top:68px;display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.limit{border:1px solid var(--line);border-radius:20px;padding:38px 34px;
+  background:var(--white);box-shadow:var(--sh1)}
+.limit .no{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.12em;
+  color:var(--ink-3);background:var(--paper-2);border-radius:100px;padding:6px 13px;margin-bottom:18px}
+.limit h4{font-size:1.55rem;font-weight:800;letter-spacing:-.04em;margin-bottom:20px;color:var(--ink)}
+.limit p{font-size:1.02rem;line-height:1.95;color:var(--ink-2)}
+.limit p + p{margin-top:1.05em}
+.statbox{margin-top:28px;padding:26px;border-radius:16px;background:var(--paper);border:1px solid var(--line)}
+.statbox .cap{font-size:11.5px;font-weight:700;letter-spacing:.12em;color:var(--ink-4);margin-bottom:20px}
+.stats{display:flex;gap:32px;align-items:flex-end;flex-wrap:wrap}
+.st b{display:block;font-size:1.9rem;font-weight:800;line-height:1;letter-spacing:-.04em;color:var(--ink)}
+.st span{display:block;margin-top:8px;font-size:.85rem;color:var(--ink-3)}
+.st.hl2 b{color:var(--clay)}
+.st.hl3 b{color:var(--acc)}
+.statbox.teal{background:linear-gradient(160deg,var(--acc-t),var(--paper) 72%);border-color:#CFE7E1}
+.statbox .desc{font-size:.94rem;line-height:1.85;color:var(--ink-2)}
+.statbox .desc + .stats{margin-top:22px}
+.twin{margin-top:28px;border-radius:16px;border:1px solid var(--line);overflow:hidden;background:var(--white)}
+.twin .row{display:flex;align-items:center;gap:14px;padding:16px 20px;font-size:.97rem}
+.twin .row + .row{border-top:1px solid var(--line)}
+.twin .cap{background:var(--paper);font-size:11.5px;font-weight:700;letter-spacing:.1em;color:var(--ink-4)}
+.twin .ic{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+  font-size:11px;font-weight:800;flex:none;color:#fff}
+.twin .yes .ic{background:var(--ind)}
+.twin .no .ic{background:var(--clay)}
+.twin .no{color:var(--ink-3)}
+.twin .row b{color:var(--ink);font-weight:700}
+
+/* ═══════════════ ch4 · TIME MACHINE ═══════════════ */
+#ch4{background:linear-gradient(180deg,#F1F7F5,#FFFFFF 34%,#FFFFFF 62%,#F1F7F5)}
+.machine-zone{margin-top:10px;display:flex;flex-direction:column;align-items:center}
+.machine{position:relative;width:min(860px,100%);border-radius:30px;padding:34px 38px 34px;
+  background:linear-gradient(168deg,#FFFFFF,#F6FAF9 70%);
+  border:1px solid #DCE7E4;box-shadow:0 4px 10px rgba(20,22,28,.04),0 50px 90px -56px rgba(15,124,107,.6);
+  transition:box-shadow .7s var(--ease),border-color .7s var(--ease),transform .5s var(--ease)}
+.machine::before{content:'';position:absolute;inset:-1px;border-radius:30px;pointer-events:none;
+  background:linear-gradient(140deg,rgba(58,86,201,.22),transparent 38%,transparent 62%,rgba(15,124,107,.28));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;padding:1px;opacity:.9}
+.machine.charging{animation:mshake .5s ease-in-out 3}
+@keyframes mshake{0%,100%{transform:translate(0,0)}20%{transform:translate(-2.5px,1.5px)}
+  50%{transform:translate(2px,-2px)}80%{transform:translate(-1.5px,-1px)}}
+.machine.done{border-color:#A9D8CE;box-shadow:0 4px 10px rgba(20,22,28,.04),0 60px 110px -50px rgba(15,124,107,.85)}
+
+.m-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}
+.m-title{font-size:11.5px;font-weight:700;letter-spacing:.2em;color:var(--ink-4)}
+.led{display:inline-flex;align-items:center;gap:9px;font-size:11.5px;font-weight:700;
+  letter-spacing:.1em;color:var(--ink-3);background:var(--paper);border:1px solid var(--line);
+  border-radius:100px;padding:7px 14px;transition:all .5s var(--ease)}
+.led i{width:8px;height:8px;border-radius:50%;background:var(--ink-4);font-style:normal;transition:all .4s}
+.machine.charging .led{background:var(--clay-t);border-color:#EDDFC9;color:var(--clay)}
+.machine.charging .led i{background:var(--clay);animation:blink .5s linear infinite}
+.machine.done .led{background:var(--acc-t);border-color:#BFDED7;color:var(--acc-d)}
+.machine.done .led i{background:var(--acc);box-shadow:0 0 0 4px rgba(15,124,107,.18)}
+
+/* stage */
+.stage{position:relative;height:258px;border-radius:22px;overflow:hidden;
+  background:radial-gradient(120% 130% at 50% 8%,#FFFFFF,#EFF6F4 78%);
+  border:1px solid #E1EAE8;display:grid;place-items:center}
+.tunnel{position:absolute;inset:0;opacity:0;transition:opacity .5s var(--ease);
+  background:repeating-linear-gradient(90deg,rgba(15,124,107,.5) 0 2px,transparent 2px 46px);
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent);
+          mask-image:linear-gradient(90deg,transparent,#000 20%,#000 80%,transparent);
+  animation:tun .55s linear infinite}
+@keyframes tun{0%{background-position:0 0}100%{background-position:92px 0}}
+.machine.charging .tunnel{opacity:.55}
+.rings{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.rings svg{width:250px;height:250px;overflow:visible}
+.rings circle{fill:none;transform-origin:50% 50%;transition:opacity .6s,stroke-width .6s}
+.r1{stroke:var(--acc);stroke-opacity:.3;stroke-width:1.4;stroke-dasharray:6 12;animation:spin 26s linear infinite}
+.r2{stroke:var(--ind);stroke-opacity:.22;stroke-width:1.4;stroke-dasharray:40 22;animation:spin 34s linear infinite reverse}
+.r3{stroke:var(--acc);stroke-opacity:.16;stroke-width:1.4;stroke-dasharray:2 9;animation:spin 44s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.machine.charging .r1{animation-duration:1.1s;stroke-opacity:.75}
+.machine.charging .r2{animation-duration:1.6s;stroke-opacity:.55}
+.machine.charging .r3{animation-duration:2.2s;stroke-opacity:.4}
+.machine.done .r1{stroke-opacity:.5}
+.machine.done .r2{stroke-opacity:.35}
+
+.year{position:relative;z-index:4;display:flex;justify-content:center;gap:2px;
+  font-size:clamp(4rem,7.6vw,6.2rem);font-weight:800;letter-spacing:-.03em;color:var(--ink);
+  line-height:1;transition:color .6s var(--ease),filter .3s,text-shadow .6s}
+.machine.charging .year{filter:blur(.7px)}
+.machine.done .year{color:var(--acc);text-shadow:0 10px 40px rgba(15,124,107,.4)}
+.reel{width:.6em;height:1em;overflow:hidden;position:relative;display:block}
+.reel .col{display:block;transform:translateY(calc(var(--v,0) * -1em));
+  transition:transform var(--dur,1.1s) cubic-bezier(.2,.75,.25,1) var(--dly,0s)}
+.reel .col span{display:block;height:1em;line-height:1em;text-align:center}
+.ylabel{position:absolute;bottom:26px;left:0;right:0;text-align:center;z-index:4;
+  font-size:11.5px;font-weight:700;letter-spacing:.24em;color:var(--ink-4);transition:color .5s}
+.machine.done .ylabel{color:var(--acc)}
+
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:6}
+.machine.done .flash{animation:flash .75s ease-out forwards}
+@keyframes flash{0%{opacity:.92}100%{opacity:0}}
+.burst{position:absolute;left:50%;top:50%;z-index:5;pointer-events:none}
+.burst i{position:absolute;left:0;top:0;width:120px;height:120px;margin:-60px 0 0 -60px;
+  border-radius:50%;border:2px solid var(--acc);opacity:0}
+.machine.done .burst i{animation:burst 1.15s cubic-bezier(.15,.8,.3,1) forwards}
+.machine.done .burst i:nth-child(2){animation-delay:.13s;border-color:var(--ind)}
+.machine.done .burst i:nth-child(3){animation-delay:.26s;border-color:var(--acc-l)}
+@keyframes burst{0%{opacity:.85;transform:scale(.25)}100%{opacity:0;transform:scale(3.4)}}
+.sparks{position:absolute;left:50%;top:50%;z-index:5;pointer-events:none}
+.sparks i{position:absolute;left:0;top:0;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;
+  border-radius:50%;background:var(--acc);opacity:0}
+.machine.done .sparks i{animation:spark 1s cubic-bezier(.15,.8,.3,1) forwards}
+@keyframes spark{
+  0%{opacity:1;transform:rotate(var(--a)) translateX(10px) scale(1.1)}
+  100%{opacity:0;transform:rotate(var(--a)) translateX(var(--d)) scale(.2)}}
+
+/* year line */
+.yearline{margin-top:26px;padding:0 6px}
+.yl-track{position:relative;height:4px;border-radius:4px;background:#E3E9E7}
+.yl-fill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:4px;
+  background:linear-gradient(90deg,var(--ind),var(--acc));transition:width .3s var(--ease)}
+.yl-mark{position:absolute;top:50%;left:0;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;
+  background:#fff;border:3px solid var(--ind);box-shadow:0 2px 8px rgba(20,22,28,.16);
+  transition:left .3s var(--ease),border-color .5s,box-shadow .5s}
+.machine.done .yl-mark{border-color:var(--acc);box-shadow:0 0 0 6px rgba(15,124,107,.14)}
+.yl-ticks{margin-top:12px;display:flex;justify-content:space-between}
+.yl-ticks span{font-size:12px;font-weight:600;color:var(--ink-4);transition:color .3s,font-weight .3s}
+.yl-ticks span.on{color:var(--acc);font-weight:800}
+
+/* charge bar */
+.charge{margin-top:22px;height:6px;border-radius:6px;background:#E9EEEC;overflow:hidden;
+  transition:height .6s var(--ease) .25s,margin-top .6s var(--ease) .25s,opacity .5s var(--ease) .25s}
+.machine.done .charge{height:0;margin-top:0;opacity:0}
+.charge i{display:block;height:100%;width:0;border-radius:6px;
+  background:linear-gradient(90deg,var(--ind),var(--acc-l),var(--acc));
+  background-size:200% 100%;transition:width 1.7s var(--ease);animation:sheen 1.1s linear infinite}
+@keyframes sheen{to{background-position:200% 0}}
+
+.m-bottom{margin-top:26px;display:flex;align-items:center;justify-content:space-between;gap:26px;flex-wrap:wrap}
+.hint{font-size:1rem;color:var(--ink-3);font-weight:500;transition:color .5s;flex:1;min-width:240px}
+.hint b{color:var(--acc);font-weight:800}
+.machine.done .hint{color:var(--acc-d)}
+.gobtn{position:relative;overflow:hidden;border:0;cursor:pointer;flex:none;
+  display:inline-flex;align-items:center;gap:14px;padding:19px 34px;border-radius:100px;
+  background:linear-gradient(135deg,var(--acc-l),var(--acc) 55%,var(--acc-d));
+  color:#fff;font-family:var(--f);font-size:1.05rem;font-weight:700;letter-spacing:-.02em;
+  box-shadow:0 4px 12px rgba(15,124,107,.28),0 16px 34px -14px rgba(15,124,107,.7);
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease),opacity .4s}
+.gobtn::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.42),transparent);
+  animation:shine 3.4s ease-in-out infinite}
+@keyframes shine{0%{left:-60%}45%,100%{left:130%}}
+.gobtn:hover{transform:translateY(-3px);box-shadow:0 6px 16px rgba(15,124,107,.32),0 24px 46px -16px rgba(15,124,107,.85)}
+.gobtn:active{transform:translateY(0) scale(.98)}
+.gobtn .ico{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;
+  background:rgba(255,255,255,.22);transition:transform .3s var(--ease)}
+.gobtn:hover .ico{transform:translateX(3px)}
+.gobtn[disabled]{cursor:default;opacity:.5;transform:none;box-shadow:none}
+.gobtn[disabled]::after{display:none}
+.gobtn.arrived{opacity:1;background:#fff;color:var(--acc-d);
+  box-shadow:inset 0 0 0 1.5px #BFDED7,0 8px 20px -12px rgba(15,124,107,.6)}
+.gobtn.arrived .ico{background:var(--acc-t);color:var(--acc)}
+.reset{margin-top:24px;background:#fff;border:1px solid var(--line-2);color:var(--ink-3);
+  border-radius:100px;padding:11px 22px;font-family:var(--f);font-size:13px;font-weight:600;cursor:pointer;
+  opacity:0;pointer-events:none;transition:all .5s var(--ease);box-shadow:var(--sh1)}
+.reset.on{opacity:1;pointer-events:auto}
+.reset:hover{color:var(--ink);border-color:var(--ink-4)}
+
+#ch4-body{display:none;margin-top:104px}
+.graph-wrap{margin-top:60px;border:1px solid var(--line);border-radius:22px;padding:38px 38px 24px;
+  background:var(--white);box-shadow:var(--sh2)}
+.graph-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:24px;flex-wrap:wrap;gap:16px}
+.graph-head h5{font-size:1.22rem;font-weight:700;letter-spacing:-.03em;color:var(--ink)}
+.legend{display:flex;gap:24px}
+.lg{display:flex;align-items:center;gap:9px;font-size:.9rem;color:var(--ink-3);font-weight:500}
+.lg i{width:20px;height:3px;border-radius:3px;font-style:normal}
+svg .anim{stroke-dasharray:1400;stroke-dashoffset:1400;transition:stroke-dashoffset 2s var(--ease) .3s}
+#ch4-body.on svg .anim{stroke-dashoffset:0}
+.meet{opacity:0;transition:opacity .8s ease 1.9s}
+#ch4-body.on .meet{opacity:1}
+
+/* ═══════════════ ch5 ═══════════════ */
+.ba{margin-top:66px;display:grid;grid-template-columns:1fr auto 1fr;gap:28px;align-items:stretch}
+.ba-col{border:1px solid var(--line);border-radius:20px;padding:36px 34px;background:var(--white);box-shadow:var(--sh1)}
+.ba-col.after{border-color:#BFDED7;box-shadow:var(--sh3);background:linear-gradient(170deg,#F4FBF9,#fff 60%)}
+.ba-col h5{font-size:11.5px;font-weight:700;letter-spacing:.14em;color:var(--ink-4);margin-bottom:10px}
+.ba-col.after h5{color:var(--acc)}
+.ba-col .t{font-size:1.42rem;font-weight:800;letter-spacing:-.04em;margin-bottom:24px;color:var(--ink)}
+.ba-list{list-style:none;display:flex;flex-direction:column;gap:15px}
+.ba-list li{display:flex;gap:13px;font-size:1rem;line-height:1.8;color:var(--ink-2)}
+.ba-list li .b{width:7px;height:7px;border-radius:50%;background:var(--ink-4);margin-top:11px;flex:none}
+.ba-col.after .ba-list li .b{background:var(--acc);box-shadow:0 0 0 3px rgba(15,124,107,.14)}
+.ba-list strong{color:var(--ink);font-weight:700}
+.ba-mid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.ba-mid .l{width:2px;flex:1;background:linear-gradient(180deg,transparent,var(--line-2),transparent)}
+.ba-mid .ic{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(135deg,var(--acc-l),var(--acc));box-shadow:0 10px 22px -10px rgba(15,124,107,.9)}
+.chips{margin-top:44px;display:flex;gap:16px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);border-radius:16px;padding:18px 26px;background:var(--white);
+  display:flex;align-items:center;gap:16px;box-shadow:var(--sh1)}
+.chip .from{color:var(--ink-4);font-size:1rem;text-decoration:line-through;text-decoration-color:#C6C6BC}
+.chip .to{color:var(--acc);font-size:1.24rem;font-weight:800;letter-spacing:-.03em}
+.chip .ar{color:var(--ink-4);font-weight:700}
+.citizen{margin-top:72px;border-radius:22px;padding:46px 50px;position:relative;overflow:hidden;
+  border:1px solid #D8DEF6;background:linear-gradient(135deg,var(--ind-t),#FBFCFF)}
+.citizen .eyebrow{color:var(--ind)}
+.citizen p{font-size:1.4rem;line-height:1.8;letter-spacing:-.04em;font-weight:600;color:var(--ink);max-width:920px}
+.citizen p b{color:var(--ind);font-weight:800}
+.dotfield{margin-top:32px;display:flex;flex-wrap:wrap;gap:9px;max-width:660px}
+.dotfield i{width:10px;height:10px;border-radius:50%;background:#CDD4EE;transition:all .6s var(--ease)}
+.rv.in .dotfield i.on{background:var(--ind);box-shadow:0 0 0 3px rgba(58,86,201,.16)}
+
+/* ═══════════════ ch6 ═══════════════ */
+.feat{margin-top:66px}
+.fcard{background:var(--white);border:1px solid var(--line);border-radius:20px;
+  padding:30px 28px 30px;box-shadow:var(--sh1);
+  transition:transform .45s var(--ease),border-color .45s,box-shadow .45s}
+.fcard:hover{transform:translateY(-7px);border-color:#BFDED7;box-shadow:var(--sh3)}
+.fcard .fn{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--acc);
+  background:var(--acc-t);border-radius:100px;padding:5px 12px;margin-bottom:22px}
+.fvis{height:116px;margin-bottom:24px;display:grid;place-items:center;border-radius:14px;
+  background:linear-gradient(170deg,#F7FBFA,#EFF6F4);border:1px solid #E4EDEB}
+.fcard h4{font-size:1.2rem;font-weight:800;letter-spacing:-.035em;margin-bottom:13px;line-height:1.45;color:var(--ink)}
+.fcard p{font-size:.95rem;line-height:1.82;color:var(--ink-3)}
+
+/* ═══════════════ outro ═══════════════ */
+.outro{padding:170px 0 150px;border-top:1px solid var(--line);position:relative;overflow:hidden;
+  text-align:center;background:var(--paper-2)}
+.outro::before{content:'';position:absolute;left:50%;top:-140px;width:900px;height:520px;margin-left:-450px;
+  background:radial-gradient(circle at 50% 50%,rgba(15,124,107,.16),transparent 66%);pointer-events:none}
+.outro h3{font-size:clamp(2.6rem,5.2vw,4.5rem);font-weight:800;letter-spacing:-.055em;line-height:1.14;color:var(--ink)}
+.outro .tag{margin-top:26px;color:var(--ink-2);font-size:1.15rem;max-width:780px;margin-inline:auto;line-height:1.92}
+.outro .sig{margin-top:60px;display:inline-flex;align-items:center;gap:10px;font-size:12px;font-weight:700;
+  letter-spacing:.24em;color:var(--acc);background:#fff;border:1px solid #CFE7E1;
+  border-radius:100px;padding:11px 22px;box-shadow:var(--sh1)}
+
+@media (max-width:1300px){#nav{right:18px}#keyhint{display:none}.wrap{padding:0 52px}.scrollcue{left:52px}}
+@media (max-width:1040px){
+  .grid3,.grid4,.two-track,.limits{grid-template-columns:1fr}
+  .ba{grid-template-columns:1fr}.ba-mid{flex-direction:row;height:44px}
+  .ba-mid .l{height:2px;width:auto;background:linear-gradient(90deg,transparent,var(--line-2),transparent)}
+  #nav{display:none}
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<nav id="nav">
+  <a href="#hero"><span class="lb">표지</span><span class="tick"></span></a>
+  <a href="#ch1"><span class="lb">배경과 문제</span><span class="tick"></span></a>
+  <a href="#ch2"><span class="lb">서비스 소개</span><span class="tick"></span></a>
+  <a href="#ch3"><span class="lb">기술의 한계</span><span class="tick"></span></a>
+  <a href="#ch4"><span class="lb">5년 뒤 가능한 이유</span><span class="tick"></span></a>
+  <a href="#ch5"><span class="lb">핵심 기능</span><span class="tick"></span></a>
+  <a href="#ch6"><span class="lb">누가 쓰는지</span><span class="tick"></span></a>
+  <a href="#outro"><span class="lb">마무리</span><span class="tick"></span></a>
+</nav>
+
+<div id="keyhint"><b>↓ / Space</b> 다음 챕터 · <b>↑</b> 이전 · <b>1–6</b> 바로가기</div>
+
+<!-- ═══════ HERO ═══════ -->
+<header class="hero" id="hero">
+  <div class="hero-bg">
+    <div class="dots"></div>
+    <div class="wash w1"></div><div class="wash w2"></div><div class="wash w3"></div>
+  </div>
+  <div class="wrap">
+    <div class="hero-badge rv"><i></i> 5년 뒤의 AI 서비스 기획</div>
+    <h1 class="rv">사회 시뮬레이션<span class="sub">SOCIETY SIMULATION · 가칭</span></h1>
+    <p class="lead rv">정책을 실제로 시행하기 전에, <em>그 정책이 적용된 가상의 사회</em>를 먼저 돌려보고<br>어떤 변화가 일어나는지 미리 확인하는 서비스.</p>
+    <p class="credit rv">17기 한지윤, 홈스쿨링</p>
+    <div class="hero-meta rv">
+      <div class="hm"><b>WHO</b><span>정책 담당자 — 그리고 그 정책 아래 사는 시민</span></div>
+      <div class="hm"><b>WHEN</b><span>연산 비용과 검증 데이터가 만나는 2031년</span></div>
+    </div>
+  </div>
+  <div class="scrollcue"><span class="bar"></span><span>SCROLL</span></div>
+</header>
+
+<!-- ═══════ 01 ═══════ -->
+<section class="chapter s-white" id="ch1">
+  <div class="ghost">01</div>
+  <div class="wrap">
+    <div class="chead rv">
+      <div class="cnum">CHAPTER 01</div>
+      <h2>배경과 문제</h2>
+      <p class="ckick">정책은 한 번 시행하면 되돌리기가 쉽지 않다. 그리고 그 결과는 시행 전에는 아무도 모른다.</p>
+    </div>
+
+    <p class="body rv">정책은 한 번 시행하면 되돌리기가 쉽지 않다. <strong>부동산 규제</strong>를 걸었다가 시장이 얼어붙으면 몇 년이 지나야 겨우 풀리고, <strong>최저임금</strong>을 큰 폭으로 올렸다가 소상공인이 줄줄이 문을 닫으면 그 피해는 고스란히 지역 경제에 남는다. <strong>교육 정책</strong> 하나가 바뀌면 그 학년 학생 전체가 준비 없이 그 변화를 그대로 떠안는다.</p>
+
+    <div class="oneway grid3">
+      <div class="ow rv">
+        <div class="tag">CASE 01 · 부동산</div>
+        <div class="step">부동산 규제 시행</div>
+        <div class="arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 4v15M12 19l-5-5M12 19l5-5"/></svg></div>
+        <div class="step">시장이 얼어붙음</div>
+        <div class="res">몇 년이 지나야 겨우 풀린다</div>
+        <div class="back"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg> 되돌리기 불가</div>
+      </div>
+      <div class="ow rv">
+        <div class="tag">CASE 02 · 최저임금</div>
+        <div class="step">최저임금 큰 폭 인상</div>
+        <div class="arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 4v15M12 19l-5-5M12 19l5-5"/></svg></div>
+        <div class="step">소상공인 연쇄 폐업</div>
+        <div class="res">피해는 고스란히 지역 경제에 남는다</div>
+        <div class="back"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg> 되돌리기 불가</div>
+      </div>
+      <div class="ow rv">
+        <div class="tag">CASE 03 · 교육</div>
+        <div class="step">교육 정책 변경</div>
+        <div class="arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M12 4v15M12 19l-5-5M12 19l5-5"/></svg></div>
+        <div class="step">해당 학년 전체가 그대로 떠안음</div>
+        <div class="res">준비할 시간 없이, 한 번뿐인 학년으로</div>
+        <div class="back"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg> 되돌리기 불가</div>
+      </div>
+    </div>
+
+    <p class="body rv" style="margin-top:62px">문제는 이런 결과가 <span class="mark-w">시행하기 전에는 아무도 정확히 모른다</span>는 점이다. 정책을 설계하는 사람들도 과거 비슷한 사례를 찾아보거나 전문가 몇 명의 의견을 듣는 정도가 최선이고, 실제로 이 정책이 우리 사회에서 어떻게 퍼져나갈지는 시행해보고서야 알게 된다.</p>
+
+    <div class="quote rv">
+      <p>결국 사회 전체가 매번 큰 실험의 대상이 되는 셈이고,<br><b>그 실험으로 인해 많은 사람들이 피해를 받는다.</b></p>
+    </div>
+
+    <div class="hist-head rv">
+      <div class="eyebrow" style="color:var(--clay)">실제 사례</div>
+      <h3 class="hist-title">역사가 증명하는 정책의 딜레마</h3>
+    </div>
+
+    <div class="hist-grid grid3">
+      <div class="hist rv">
+        <div class="meta">19세기 · 영국령 인도</div>
+        <h4>코브라 포상금 정책</h4>
+        <p>코브라에 물려 죽는 사람을 줄이려고 코브라를 잡아오면 포상금을 주는 정책을 시행했다. 그런데 사람들이 포상금을 노리고 코브라를 직접 사육하기 시작했다. 뒤늦게 포상금 제도를 없애자 쓸모없어진 코브라들을 전부 풀어버려서, 정책 시행 전보다 코브라가 더 많은 도시가 됐다.</p>
+        <div class="foot">의도는 좋았지만, 사람들이 어떻게 반응할지 미리 알지 못해 벌어진 일이다.</div>
+      </div>
+      <div class="hist rv">
+        <div class="meta">1920~1933년 · 미국</div>
+        <h4>금주법</h4>
+        <p>술을 사회 문제의 원인으로 보고 제조와 판매를 전면 금지했다. 그러나 밀주 제조와 밀매가 폭발적으로 늘면서 마피아 같은 조직범죄가 이 틈을 타 급성장했고, 정작 술 소비량은 줄지 않았다. 결국 1933년 수정헌법으로 폐지됐다.</p>
+        <div class="foot">의도는 좋았지만, 사람들이 어떻게 반응할지 미리 알지 못해 벌어진 일이다.</div>
+      </div>
+      <div class="hist rv">
+        <div class="meta">2007~2012년 · 한국</div>
+        <h4>인터넷 실명제</h4>
+        <p>악성 댓글과 명예훼손을 줄이기 위해 게시판에 글을 쓰려면 본인 확인을 거치도록 의무화했다. 그러나 시행 후에도 악성 댓글이 의미 있게 줄었다는 증거는 없었고, 개인정보 유출 위험만 커졌다. 2012년 헌법재판소가 재판관 8명 전원일치로 위헌 결정을 내리며 폐지됐다.</p>
+        <div class="foot">의도는 좋았지만, 사람들이 어떻게 반응할지 미리 알지 못해 벌어진 일이다.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ 02 ═══════ -->
+<section class="chapter s-paper" id="ch2">
+  <div class="ghost">02</div>
+  <div class="wrap">
+    <div class="chead rv">
+      <div class="cnum">CHAPTER 02</div>
+      <h2>서비스 한줄소개</h2>
+      <p class="ckick">시행이 아니라, 시행 전의 리허설.</p>
+    </div>
+
+    <p class="statement rv">정책을 실제로 시행하기 전에, 그 정책이 적용된 <b>가상의 사회를 먼저 돌려보고</b> 어떤 변화가 일어나는지 미리 확인하는 서비스, 일명 <b>사회 시뮬레이션</b>이다.</p>
+
+    <div class="two-track">
+      <div class="track real rv">
+        <h5>NOW · 현실의 정책 집행</h5>
+        <div class="chain">
+          <span class="node">정책안</span><span class="ar">→</span>
+          <span class="node">사회에 시행</span><span class="ar">→</span>
+          <span class="node">결과</span>
+        </div>
+        <div class="loop"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg> 되돌릴 수 없음 · 대조군 없음 · 단 한 번</div>
+        <p class="note">결과를 확인하는 순간, 이미 사회 전체가 그 결과를 겪은 뒤다.</p>
+      </div>
+      <div class="track sim rv">
+        <h5>SOCIETY SIMULATION · 가상 사회에서 먼저</h5>
+        <div class="chain">
+          <span class="node">정책안</span><span class="ar">→</span>
+          <span class="node">가상 사회에 적용</span><span class="ar">→</span>
+          <span class="node">결과</span>
+        </div>
+        <div class="loop"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg> 조건을 바꿔 몇 번이고 다시 · 피해 없이</div>
+        <p class="note">부작용을 발견해도 아직 아무 일도 일어나지 않았다. 고치고 다시 돌리면 된다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ 03 ═══════ -->
+<section class="chapter s-white" id="ch3">
+  <div class="ghost">03</div>
+  <div class="wrap">
+    <div class="chead rv">
+      <div class="cnum">CHAPTER 03</div>
+      <h2>기술의 한계</h2>
+      <p class="ckick">이 서비스가 지금 당장 나오지 못하는 이유는 두 가지 층위로 나뉜다.</p>
+    </div>
+
+    <div class="limits">
+      <div class="limit rv">
+        <div class="no">LIMIT 01</div>
+        <h4>AI 기술 자체의 한계</h4>
+        <p>이 서비스가 하려는 일은 개별 질문에 답을 잘하는 게 아니라, <strong>수십만에서 수백만 명</strong>에 달하는 가상 시민이 각자 자기 상황에 맞게 판단하고, 그 판단이 주변 사람에게 영향을 주고, 그 영향이 다시 사회 전체로 번지는 복잡한 상호작용을 동시에 계산하는 일이다.</p>
+        <p>지금 AI 기술은 이 중 첫 단계, 즉 한 사람처럼 판단하는 가상 시민 한 명을 만드는 것부터 이미 벅차다. <span class="mark-w">하물며 이런 개체 수백만 개가 실시간으로 서로 영향을 주고받는 계산은 아직 아무도 시도조차 못 했다.</span></p>
+        <div class="statbox">
+          <div class="cap">REFERENCE · 스탠퍼드 연구팀</div>
+          <p class="desc">스탠퍼드 연구팀이 미국 성인 1,052명을 나이·성별·인종·교육 수준까지 실제 인구 구성과 비슷하게 뽑아서, 각자의 인생 이야기와 가치관을 2시간 동안 인터뷰했다. 이 인터뷰를 바탕으로 그 사람처럼 판단하는 AI 에이전트를 만든 뒤, 2주 뒤 같은 사람들을 다시 불러 사회 설문, 성격 검사, 실제 돈이 걸린 경제 게임, 사회과학 실험까지 네 가지 테스트를 실시했다. 사람도 2주가 지나면 생각이 바뀌기 때문에, AI가 그 변화까지 따라가는지 보려는 설계였다.</p>
+          <div class="stats">
+            <div class="st"><b>1,052</b><span>인터뷰한 실제 사람 수</span></div>
+            <div class="st"><b>2h</b><span>1인당 인터뷰 시간</span></div>
+            <div class="st hl2"><b>85%</b><span>의견 설문 예측 정확도</span></div>
+          </div>
+          <p class="desc" style="margin-top:20px">인생 이야기와 가치관을 물어본 인터뷰만으로는, 실제 이해관계가 걸린 상황에서 사람이 어떻게 행동할지 예측하는 데 한계가 있었다. 정책에 대한 반응 역시 사람들의 실제 이해관계가 걸린 문제라는 점에서, <strong>이 한계는 우리 서비스에 그대로 적용된다.</strong></p>
+        </div>
+        <p style="margin-top:24px">이 연구는 개인 한 명 한 명이 어떻게 답할지 흉내 내는 데까지만 다뤘다. 그 정도를 1,052명 규모로 만드는 데도 이만큼 비용과 시간이 들었고, 이해관계가 걸린 판단에서는 정확도도 크게 떨어졌다. <strong>가상 시민들이 서로 영향을 주고받는 계산은 이 연구조차 손대지 못한 다음 단계다.</strong></p>
+      </div>
+
+      <div class="limit rv">
+        <div class="no">LIMIT 02</div>
+        <h4>데이터의 한계</h4>
+        <p>설령 연산 능력이 해결된다 해도, 가상 시민이 <strong>실제 사람처럼 반응하는지 검증할 방법이 없다.</strong> 어떤 정책을 시행했을 때 사람들이 실제로 어떻게 행동을 바꿨는지, 그리고 그 변화가 개개인의 소득이나 삶의 질에 구체적으로 <strong>어떤 영향을 남겼는지</strong>에 대한 세밀한 데이터가 지금은 거의 없다.</p>
+        <p>정책 실험은 국가 단위로 딱 한 번만 해볼 수 있고, 되돌릴 수도 없고, 비교할 대조군도 만들 수 없기 때문이다.</p>
+        <div class="twin">
+          <div class="row cap">국내 디지털 트윈 사업이 보여주는 한계</div>
+          <div class="row yes"><span class="ic">✓</span><span><b>도로 · 건물 · 교통량</b> — 물리적 요소는 정밀하게 복제</span></div>
+          <div class="row no"><span class="ic">✕</span><span><b>사람의 반응 · 행동 변화</b> — 다루지 않음</span></div>
+          <div class="row no"><span class="ic">✕</span><span><b>정책이 남긴 실질적 영향</b> — 다루지 않음</span></div>
+        </div>
+        <p style="margin-top:24px">다룰 데이터가 없기 때문이다. 물리적 세계는 복제할 수 있지만, <span class="mark-w">정책에 반응하는 사람도, 그 정책이 삶에 남긴 영향도 아직 복제되지 않는다.</span> 그리고 <strong>그 빈 자리가 우리 서비스다.</strong></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ 04 ═══════ -->
+<section class="chapter" id="ch4">
+  <div class="ghost">04</div>
+  <div class="wrap">
+    <div class="chead rv">
+      <div class="cnum">CHAPTER 04</div>
+      <h2>5년 뒤 가능한 이유</h2>
+      <p class="ckick">그렇다면 언제 가능해지는가. 시간을 직접 옮겨보자.</p>
+    </div>
+
+    <div class="machine-zone rv">
+      <div class="machine" id="machine">
+        <div class="m-top">
+          <span class="m-title">TEMPORAL PROJECTION UNIT</span>
+          <span class="led"><i></i><span id="ledtxt">STANDBY</span></span>
+        </div>
+
+        <div class="stage">
+          <div class="tunnel"></div>
+          <div class="rings">
+            <svg viewBox="0 0 260 260">
+              <circle class="r1" cx="130" cy="130" r="118"/>
+              <circle class="r2" cx="130" cy="130" r="96"/>
+              <circle class="r3" cx="130" cy="130" r="74"/>
+            </svg>
+          </div>
+          <div class="burst"><i></i><i></i><i></i></div>
+          <div class="sparks" id="sparks"></div>
+          <div class="year" id="year">
+            <span class="reel"></span><span class="reel"></span><span class="reel"></span><span class="reel"></span>
+          </div>
+          <div class="ylabel" id="ylabel">CURRENT YEAR</div>
+          <div class="flash"></div>
+        </div>
+
+        <div class="yearline">
+          <div class="yl-track">
+            <div class="yl-fill" id="yfill"></div>
+            <div class="yl-mark" id="ymark"></div>
+          </div>
+          <div class="yl-ticks" id="yticks">
+            <span class="on">2026</span><span>2027</span><span>2028</span><span>2029</span><span>2030</span><span>2031</span>
+          </div>
+        </div>
+
+        <div class="charge"><i id="cbar"></i></div>
+
+        <div class="m-bottom">
+          <div class="hint" id="hint">버튼을 누르면 <b>5년 뒤</b>로 이동해 그때 무엇이 달라져 있는지 확인합니다.</div>
+          <button class="gobtn" id="gobtn" type="button">
+            <span class="lbl">5년 뒤로 이동</span>
+            <span class="ico"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 6l6 6-6 6"/></svg></span>
+          </button>
+        </div>
+      </div>
+      <button class="reset" id="reset" type="button">↺ 다시 2026년으로</button>
+    </div>
+
+    <div id="ch4-body">
+      <div class="eyebrow rv" style="margin-bottom:20px">2031 · 두 가지 조건이 동시에 갖춰진다</div>
+
+      <p class="body rv">먼저 <strong>연산 비용</strong> 쪽은 계속 가파르게 떨어지고 있다. 지금은 수백만 개체를 동시에 시뮬레이션하는 게 비현실적이지만, 지난 몇 년간 AI 모델을 돌리는 비용이 꾸준히 낮아져 온 흐름을 생각하면 5년 뒤에는 <span class="hl">이 정도 규모의 계산도 감당할 수 있는 수준</span>이 될 가능성이 높다.</p>
+
+      <div class="graph-wrap rv">
+        <div class="graph-head">
+          <h5>두 조건의 궤적 — 2026 → 2031</h5>
+          <div class="legend">
+            <div class="lg"><i style="background:#B0662A"></i> 연산 비용 (하락)</div>
+            <div class="lg"><i style="background:#0F7C6B"></i> 검증 가능한 반응 데이터 (축적)</div>
+          </div>
+        </div>
+        <svg viewBox="0 0 1000 400" width="100%" height="auto" style="display:block">
+          <defs>
+            <linearGradient id="gcost" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#B0662A" stop-opacity=".3"/><stop offset="100%" stop-color="#B0662A"/>
+            </linearGradient>
+            <linearGradient id="gdata" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#0F7C6B" stop-opacity=".25"/><stop offset="100%" stop-color="#0F7C6B"/>
+            </linearGradient>
+          </defs>
+          <g stroke="#EAEAE3" stroke-width="1">
+            <line x1="60" y1="60" x2="960" y2="60"/><line x1="60" y1="125" x2="960" y2="125"/>
+            <line x1="60" y1="190" x2="960" y2="190"/><line x1="60" y1="255" x2="960" y2="255"/>
+            <line x1="60" y1="320" x2="960" y2="320"/>
+          </g>
+          <g stroke="#F0F0EA" stroke-width="1">
+            <line x1="90" y1="52" x2="90" y2="330"/><line x1="246" y1="52" x2="246" y2="330"/>
+            <line x1="402" y1="52" x2="402" y2="330"/><line x1="558" y1="52" x2="558" y2="330"/>
+            <line x1="714" y1="52" x2="714" y2="330"/>
+          </g>
+          <line x1="870" y1="40" x2="870" y2="340" stroke="#0F7C6B" stroke-opacity=".28" stroke-width="1.5" stroke-dasharray="5 5"/>
+          <path class="anim" d="M90,78 C 320,112 540,158 870,200" fill="none" stroke="url(#gcost)" stroke-width="3" stroke-linecap="round"/>
+          <path class="anim" d="M90,322 C 320,306 540,258 870,200" fill="none" stroke="url(#gdata)" stroke-width="3" stroke-linecap="round"/>
+          <g class="meet">
+            <circle cx="870" cy="200" r="28" fill="#0F7C6B" fill-opacity=".08"/>
+            <circle cx="870" cy="200" r="15" fill="#fff" stroke="#0F7C6B" stroke-width="1.5" stroke-opacity=".4"/>
+            <circle cx="870" cy="200" r="7.5" fill="#0F7C6B"/>
+            <text x="870" y="148" text-anchor="middle" fill="#0F7C6B" font-family="Pretendard, sans-serif" font-size="16" font-weight="800" letter-spacing="0">2031</text>
+            <text x="870" y="170" text-anchor="middle" fill="#767D8B" font-family="Pretendard, sans-serif" font-size="13" font-weight="500">두 조건이 만나는 지점</text>
+          </g>
+          <text x="90" y="60" fill="#B0662A" font-family="Pretendard, sans-serif" font-size="13.5" font-weight="600">연산 비용</text>
+          <text x="90" y="348" fill="#0F7C6B" font-family="Pretendard, sans-serif" font-size="13.5" font-weight="600">검증 데이터</text>
+          <g fill="#9CA2AE" font-family="Pretendard, sans-serif" font-size="13" font-weight="500" text-anchor="middle">
+            <text x="90" y="378">2026</text><text x="246" y="378">2027</text><text x="402" y="378">2028</text>
+            <text x="558" y="378">2029</text><text x="714" y="378">2030</text>
+            <text x="870" y="378" fill="#0F7C6B" font-weight="800">2031</text>
+          </g>
+        </svg>
+      </div>
+
+      <p class="body rv" style="margin-top:62px"><strong>데이터</strong> 쪽은 사람들의 실제 반응을 모으려는 시도 자체가 이미 늘어나고 있다. <strong>리빙랩</strong>이라는 이름으로 여러 지자체가 정책을 전국 단위로 시행하기 전에 특정 동네나 학교를 대상으로 먼저 실행해보고, 그 반응을 데이터로 모으는 방식이다. 서울의 한 초등학교들은 통학로 안전 정책을 실제로 적용해보기 전에 학생들이 가상 공간에서 통학 경로를 체험하게 하고 그 반응을 데이터로 모아 2년간 39개의 해결책을 도출했고, 강남구는 주민과 경찰, 관계 부서가 함께 특정 공공 공간 문제를 현장에서 실증하며 반응을 기록하고 있다. 다만 지금은 이런 데이터를 얻으려면 <strong>동네 하나, 학교 하나 단위로라도 실제로 실행을 해봐야만 한다.</strong></p>
+
+      <div class="statbox teal rv">
+        <div class="cap">REFERENCE · 리빙랩 데이터 축적 사례</div>
+        <div class="stats">
+          <div class="st"><b>2022–24</b><span>서울 초등학교 통학로 리빙랩 운영 기간</span></div>
+          <div class="st hl3"><b>39</b><span>기간 내 도출된 해결책 수</span></div>
+          <div class="st"><b>4개교 · 284명</b><span>2025년 실증에 참여한 학교 · 학생 규모</span></div>
+        </div>
+      </div>
+
+      <p class="body rv">이런 방식으로 반응 데이터가 정책마다 쌓이면, <span class="hl">나중에는 실제로 실행하지 않아도 가상 시뮬레이션만으로 비슷한 반응을 예측할 수 있는 재료가 된다.</span> 즉 리빙랩은 우리 서비스의 축소판이 아니라, 우리 서비스가 필요로 하는 <strong>검증 데이터의 출처</strong>인 셈이다.</p>
+
+      <div class="quote teal rv" style="margin-top:56px">
+        <p><b>연산 능력</b>과 <b>검증 데이터</b>라는 두 가지 조건이<br>동시에 갖춰지는 시점이 대략 <b>5년 뒤</b>로 보인다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ 05 ═══════ -->
+<section class="chapter s-paper" id="ch5">
+  <div class="ghost">05</div>
+  <div class="wrap">
+    <div class="chead rv">
+      <div class="cnum">CHAPTER 05</div>
+      <h2>핵심 기능</h2>
+      <p class="ckick">가상 시민을 만들고, 관계로 잇고, 시간을 돌리고, 결과를 비교한다.</p>
+    </div>
+
+    <div class="feat grid4">
+      <div class="fcard rv">
+        <div class="fn">FEATURE 01</div>
+        <div class="fvis">
+          <svg width="150" height="76" viewBox="0 0 150 76">
+            <g fill="#0F7C6B">
+              <circle cx="16" cy="16" r="4.4" opacity=".95"/><circle cx="38" cy="16" r="4.4" opacity=".45"/><circle cx="60" cy="16" r="4.4" opacity=".75"/><circle cx="82" cy="16" r="4.4" opacity=".3"/><circle cx="104" cy="16" r="4.4" opacity=".65"/><circle cx="126" cy="16" r="4.4" opacity=".4"/>
+              <circle cx="16" cy="38" r="4.4" opacity=".35"/><circle cx="38" cy="38" r="4.4" opacity=".85"/><circle cx="60" cy="38" r="4.4" opacity=".28"/><circle cx="82" cy="38" r="4.4" opacity=".9"/><circle cx="104" cy="38" r="4.4" opacity=".35"/><circle cx="126" cy="38" r="4.4" opacity=".7"/>
+              <circle cx="16" cy="60" r="4.4" opacity=".65"/><circle cx="38" cy="60" r="4.4" opacity=".3"/><circle cx="60" cy="60" r="4.4" opacity=".55"/><circle cx="82" cy="60" r="4.4" opacity=".4"/><circle cx="104" cy="60" r="4.4" opacity=".88"/><circle cx="126" cy="60" r="4.4" opacity=".3"/>
+            </g>
+          </svg>
+        </div>
+        <h4>가상 시민 자동 생성</h4>
+        <p>통계청 인구 데이터와 사회조사 자료를 바탕으로 실제 인구 구성과 비슷한 비율로 가상 시민을 만들어낸다. 각 시민은 나이, 직업, 소득, 거주지, 가치관 같은 배경을 갖고 있어서 같은 정책이라도 저마다 다르게 반응한다.</p>
+      </div>
+
+      <div class="fcard rv">
+        <div class="fn">FEATURE 02</div>
+        <div class="fvis">
+          <svg width="150" height="80" viewBox="0 0 150 80">
+            <g stroke="#0F7C6B" stroke-width="1.3" opacity=".38">
+              <line x1="75" y1="40" x2="30" y2="18"/><line x1="75" y1="40" x2="122" y2="24"/>
+              <line x1="75" y1="40" x2="28" y2="62"/><line x1="75" y1="40" x2="112" y2="64"/>
+              <line x1="30" y1="18" x2="28" y2="62"/><line x1="122" y1="24" x2="112" y2="64"/>
+              <line x1="30" y1="18" x2="122" y2="24"/>
+            </g>
+            <circle cx="75" cy="40" r="16" fill="none" stroke="#0F7C6B" stroke-width="1.2" opacity=".24"/>
+            <circle cx="75" cy="40" r="26" fill="none" stroke="#0F7C6B" stroke-width="1.2" opacity=".12"/>
+            <g fill="#0F7C6B">
+              <circle cx="75" cy="40" r="7.5"/><circle cx="30" cy="18" r="5" opacity=".7"/>
+              <circle cx="122" cy="24" r="5" opacity=".7"/><circle cx="28" cy="62" r="5" opacity=".7"/>
+              <circle cx="112" cy="64" r="5" opacity=".7"/>
+            </g>
+          </svg>
+        </div>
+        <h4>관계망 기반 확산 시뮬레이션</h4>
+        <p>가상 시민들 사이에 가족, 직장, 이웃, 온라인 관계 같은 연결망을 깔아서, 한 사람의 반응이나 의견이 주변으로 퍼져나가는 과정까지 함께 계산한다.</p>
+      </div>
+
+      <div class="fcard rv">
+        <div class="fn">FEATURE 03</div>
+        <div class="fvis">
+          <svg width="150" height="78" viewBox="0 0 150 78">
+            <rect x="14" y="10" width="122" height="16" rx="5" fill="#0F7C6B" fill-opacity=".08" stroke="#0F7C6B" stroke-opacity=".3" stroke-width="1"/>
+            <line x1="20" y1="18" x2="70" y2="18" stroke="#0F7C6B" stroke-opacity=".45" stroke-width="2" stroke-linecap="round"/>
+            <line x1="14" y1="50" x2="136" y2="50" stroke="#D8E4E1" stroke-width="2.5" stroke-linecap="round"/>
+            <line x1="14" y1="50" x2="95" y2="50" stroke="#0F7C6B" stroke-width="2.5" stroke-linecap="round"/>
+            <g fill="#B9C7C3">
+              <circle cx="45" cy="50" r="2.6"/><circle cx="76" cy="50" r="2.6"/><circle cx="107" cy="50" r="2.6"/><circle cx="136" cy="50" r="2.6"/>
+            </g>
+            <circle cx="95" cy="50" r="7.5" fill="#0F7C6B"/>
+            <circle cx="95" cy="50" r="12" fill="none" stroke="#0F7C6B" stroke-opacity=".25" stroke-width="1.4"/>
+            <g fill="#9CA2AE" font-family="Pretendard, sans-serif" font-size="9" font-weight="600">
+              <text x="13" y="70">D+1</text><text x="119" y="70">Y+5</text>
+            </g>
+          </svg>
+        </div>
+        <h4>정책 입력과 시간 진행</h4>
+        <p>사용자가 정책 내용을 입력하면 시뮬레이션이 이를 각 가상 시민의 상황에 맞게 반영하고, 하루부터 몇 년 단위까지 시간을 진행시키며 개별 반응이 쌓여 사회 전체 지표로 변하는 과정을 보여준다.</p>
+      </div>
+
+      <div class="fcard rv">
+        <div class="fn">FEATURE 04</div>
+        <div class="fvis">
+          <svg width="150" height="80" viewBox="0 0 150 80">
+            <g fill="#C3C9C7">
+              <rect x="20" y="42" width="14" height="30" rx="4"/>
+              <rect x="40" y="30" width="14" height="42" rx="4"/>
+              <rect x="60" y="50" width="14" height="22" rx="4"/>
+            </g>
+            <line x1="83" y1="14" x2="83" y2="76" stroke="#DEDED6" stroke-width="1.5" stroke-dasharray="3 4"/>
+            <g fill="#0F7C6B">
+              <rect x="92" y="28" width="14" height="44" rx="4"/>
+              <rect x="112" y="18" width="14" height="54" rx="4"/>
+              <rect x="132" y="38" width="14" height="34" rx="4"/>
+            </g>
+            <g font-family="Pretendard, sans-serif" font-size="9" font-weight="700">
+              <text x="20" y="12" fill="#9CA2AE">미시행</text>
+              <text x="92" y="12" fill="#0F7C6B">시행</text>
+            </g>
+          </svg>
+        </div>
+        <h4>결과 비교와 조건 조정</h4>
+        <p>정책을 시행했을 때와 하지 않았을 때를 나란히 비교해서 보여주고, 정책의 세부 조건을 바꿔가며 다시 돌려볼 수 있게 해서 담당자가 최적의 방안을 찾도록 돕는다.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ 06 ═══════ -->
+<section class="chapter s-white" id="ch6">
+  <div class="ghost">06</div>
+  <div class="wrap">
+    <div class="chead rv">
+      <div class="cnum">CHAPTER 06</div>
+      <h2>누가 쓰는지</h2>
+      <p class="ckick">가장 직접적인 사용자는 정책을 설계하고 결재하는 <strong>정책 담당자</strong>다.</p>
+    </div>
+
+    <div class="ba">
+      <div class="ba-col rv">
+        <h5>BEFORE · 지금 이들의 하루</h5>
+        <div class="t">확신 없이 올리는 결재</div>
+        <ul class="ba-list">
+          <li><span class="b"></span><span>규제나 정책을 새로 만들 때는 법으로 <strong>규제영향분석서</strong>를 써야 하는데, 실제 시뮬레이션이 아니라 전문가 서면 자문이나 비슷한 과거 사례 비교로 채워지는 경우가 많다</span></li>
+          <li><span class="b"></span><span>정말 확인하고 싶으면 특정 지역에서 몇 달에서 몇 년씩 <strong>시범사업</strong>을 먼저 해봐야 한다</span></li>
+          <li><span class="b"></span><span>그 시범사업 결과가 나와야 전국 확대 여부를 정할 수 있어서, <strong>전국 시행 전엔 사회 전체가 어떻게 반응할지 알 방법이 없다</strong></span></li>
+        </ul>
+      </div>
+      <div class="ba-mid">
+        <span class="l"></span>
+        <span class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 6l6 6-6 6"/></svg></span>
+        <span class="l"></span>
+      </div>
+      <div class="ba-col after rv">
+        <h5>AFTER · 사회 시뮬레이션이 있으면</h5>
+        <div class="t">근거를 갖고 내리는 결정</div>
+        <ul class="ba-list">
+          <li><span class="b"></span><span>정책안을 입력하면 <strong>하루 만에</strong> 시뮬레이션 결과를 받는다</span></li>
+          <li><span class="b"></span><span><strong>시범사업 없이도</strong> 조건을 바꿔가며 같은 정책을 여러 번 돌려본다</span></li>
+          <li><span class="b"></span><span>몇 달, 몇 년 걸리던 검증 과정이 <strong>하루로</strong> 줄어든다</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="chips rv">
+      <div class="chip"><span class="from">시범사업 (몇 달~몇 년)</span><span class="ar">→</span><span class="to">하루</span></div>
+      <div class="chip"><span class="from">서면 자문</span><span class="ar">→</span><span class="to">실증 데이터</span></div>
+      <div class="chip"><span class="from">제한된 공청회</span><span class="ar">→</span><span class="to">반복 시뮬레이션</span></div>
+    </div>
+
+    <div class="citizen rv">
+      <div class="eyebrow">그리고 진짜 영향을 받는 사람들</div>
+      <p>정책 담당자가 시행 전에 부작용을 미리 발견하고 수정할 수 있게 되면, 잘못된 정책 때문에 피해를 볼 뻔했던 사람들의 삶이 <b>애초에 그 피해를 겪지 않게 되는 방식으로</b> 바뀐다.</p>
+      <div class="dotfield" id="dotfield"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ OUTRO ═══════ -->
+<section class="outro" id="outro">
+  <div class="wrap">
+    <h3 class="rv">사회 시뮬레이션</h3>
+    <p class="tag rv">정책을 실제로 시행하기 전에, 그 정책이 적용된 가상의 사회를 먼저 돌려보고<br>어떤 변화가 일어나는지 미리 확인하는 서비스.</p>
+    <div class="sig rv">2031 · SOCIETY SIMULATION</div>
+  </div>
+</section>
+
+<script>
+/* ───── reveal ───── */
+(function(){
+  var els = Array.prototype.slice.call(document.querySelectorAll('.rv'));
+  els.forEach(function(el){
+    var sibs = Array.prototype.filter.call(el.parentNode.children,function(c){return c.classList.contains('rv');});
+    el.style.transitionDelay = (Math.min(sibs.indexOf(el),6)*85)+'ms';
+  });
+  function showAll(){els.forEach(function(e){e.classList.add('in');});}
+  if(!('IntersectionObserver' in window)){showAll();return;}
+  var io=new IntersectionObserver(function(en){
+    en.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+  },{threshold:.12,rootMargin:'0px 0px -8% 0px'});
+  els.forEach(function(e){io.observe(e);});
+  setTimeout(function(){ if(!document.querySelector('.rv.in')) showAll(); },2500);
+})();
+
+/* ───── dot field ───── */
+(function(){
+  var f=document.getElementById('dotfield'); if(!f) return;
+  var h=''; for(var i=0;i<52;i++){h+='<i class="'+((i%5===0||i%7===0)?'on':'')+'"></i>';}
+  f.innerHTML=h;
+})();
+
+/* ───── progress + nav ───── */
+(function(){
+  var bar=document.getElementById('progress');
+  var links=Array.prototype.slice.call(document.querySelectorAll('#nav a'));
+  var secs=links.map(function(a){return document.querySelector(a.getAttribute('href'));});
+  function tick(){
+    var h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?(window.scrollY/h*100):0)+'%';
+    var y=window.scrollY+window.innerHeight*.35,idx=0;
+    secs.forEach(function(s,i){if(s&&s.offsetTop<=y)idx=i;});
+    links.forEach(function(a,i){a.classList.toggle('act',i===idx);});
+  }
+  window.addEventListener('scroll',tick,{passive:true});
+  window.addEventListener('resize',tick); tick();
+
+  links.forEach(function(a,i){
+    a.addEventListener('click',function(e){
+      e.preventDefault();
+      var target=secs[i];
+      if(!target) return;
+      window.scrollTo({top:target.offsetTop,behavior:'smooth'});
+    });
+  });
+})();
+
+/* ───── TIME MACHINE ───── */
+var Machine=(function(){
+  var YEARS=[2026,2027,2028,2029,2030,2031];
+  /* reel indices: 0-9 repeated twice, so digits always roll forward */
+  var IDX=[[2,0,2,6],[2,0,2,7],[2,0,2,8],[2,0,2,9],[2,0,3,10],[2,0,3,11]];
+  var SPIN=[12,10,null,null]; /* first two digits do a full decorative lap */
+  var reels=Array.prototype.slice.call(document.querySelectorAll('#year .reel'));
+  var machine=document.getElementById('machine');
+  var btn=document.getElementById('gobtn');
+  var hint=document.getElementById('hint');
+  var ylabel=document.getElementById('ylabel');
+  var ledtxt=document.getElementById('ledtxt');
+  var body=document.getElementById('ch4-body');
+  var resetBtn=document.getElementById('reset');
+  var cbar=document.getElementById('cbar');
+  var yfill=document.getElementById('yfill');
+  var ymark=document.getElementById('ymark');
+  var yticks=Array.prototype.slice.call(document.querySelectorAll('#yticks span'));
+  var sparks=document.getElementById('sparks');
+  var ico=btn.querySelector('.ico');
+  var ARROW=ico.innerHTML;
+  var CHECK='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4.5 4.5L19 7"/></svg>';
+  var running=false,done=false,timers=[];
+
+  reels.forEach(function(r,i){
+    var s=''; for(var n=0;n<20;n++){s+='<span>'+(n%10)+'</span>';}
+    r.innerHTML='<span class="col">'+s+'</span>';
+    var c=r.firstChild;
+    c.style.setProperty('--v',IDX[0][i]);
+    c.style.setProperty('--dur',(0.5+i*0.05)+'s');
+  });
+  (function(){
+    var h='';
+    for(var i=0;i<18;i++){
+      h+='<i style="--a:'+(i*20)+'deg;--d:'+(80+Math.round(Math.random()*90))+'px;'+
+         'animation-delay:'+(Math.random()*.22).toFixed(2)+'s;'+
+         (i%3===1?'background:#3A56C9;':(i%3===2?'background:#39A793;':''))+'"></i>';
+    }
+    sparks.innerHTML=h;
+  })();
+
+  function setStep(k){
+    reels.forEach(function(r,i){ r.firstChild.style.setProperty('--v',IDX[k][i]); });
+    var pct=k/(YEARS.length-1)*100;
+    yfill.style.width=pct+'%'; ymark.style.left=pct+'%';
+    yticks.forEach(function(s,i){s.classList.toggle('on',i===k);});
+  }
+
+  function revealBody(){
+    body.style.display='block';
+    void body.offsetHeight;
+    body.classList.add('on');
+    Array.prototype.slice.call(body.querySelectorAll('.rv')).forEach(function(el,i){
+      timers.push(setTimeout(function(){el.classList.add('in');},130+i*140));
+    });
+  }
+
+  function run(){
+    if(running||done) return;
+    running=true;
+    machine.classList.add('charging');
+    btn.disabled=true;
+    btn.querySelector('.lbl').textContent='이동 중…';
+    ledtxt.textContent='CHARGING';
+    ylabel.textContent='TRAVELLING…';
+    hint.innerHTML='시간축을 따라 이동하는 중입니다…';
+    cbar.style.width='100%';
+    /* decorative full lap on the leading digits */
+    timers.push(setTimeout(function(){
+      reels.forEach(function(r,i){ if(SPIN[i]!==null){
+        r.firstChild.style.setProperty('--dur','1.5s');
+        r.firstChild.style.setProperty('--v',SPIN[i]);
+      }});
+    },80));
+    /* year-by-year stepping */
+    for(var k=1;k<YEARS.length;k++){
+      (function(k){
+        timers.push(setTimeout(function(){
+          reels.forEach(function(r,i){
+            if(SPIN[i]===null) r.firstChild.style.setProperty('--v',IDX[k][i]);
+          });
+          var pct=k/(YEARS.length-1)*100;
+          yfill.style.width=pct+'%'; ymark.style.left=pct+'%';
+          yticks.forEach(function(s,i){s.classList.toggle('on',i===k);});
+          ledtxt.textContent=YEARS[k];
+        },260+(k-1)*270));
+      })(k);
+    }
+    /* arrival */
+    timers.push(setTimeout(function(){
+      machine.classList.remove('charging');
+      machine.classList.add('done');
+      running=false; done=true;
+      ledtxt.textContent='LOCKED · 2031';
+      ylabel.textContent='PROJECTED YEAR';
+      hint.innerHTML='지금부터 <b>5년 뒤</b> — 두 가지 조건이 동시에 갖춰집니다.';
+      btn.querySelector('.lbl').textContent='도착 · 2031';
+      btn.classList.add('arrived'); ico.innerHTML=CHECK;
+      resetBtn.classList.add('on');
+      revealBody();
+    },1900));
+  }
+
+  function reset(){
+    timers.forEach(clearTimeout); timers=[];
+    running=false; done=false;
+    machine.classList.remove('charging','done');
+    btn.disabled=false;
+    btn.classList.remove('arrived'); ico.innerHTML=ARROW;
+    btn.querySelector('.lbl').textContent='5년 뒤로 이동';
+    ledtxt.textContent='STANDBY';
+    ylabel.textContent='CURRENT YEAR';
+    hint.innerHTML='버튼을 누르면 <b>5년 뒤</b>로 이동해 그때 무엇이 달라져 있는지 확인합니다.';
+    resetBtn.classList.remove('on');
+    cbar.style.width='0%';
+    body.classList.remove('on'); body.style.display='none';
+    Array.prototype.slice.call(body.querySelectorAll('.rv')).forEach(function(el){el.classList.remove('in');});
+    reels.forEach(function(r,i){
+      var c=r.firstChild;
+      c.style.transition='none';
+      c.style.setProperty('--v',IDX[0][i]);
+      void c.offsetHeight;
+      c.style.transition='';
+      c.style.setProperty('--dur',(0.5+i*0.05)+'s');
+    });
+    setStep(0);
+  }
+
+  btn.addEventListener('click',run);
+  resetBtn.addEventListener('click',reset);
+  setStep(0);
+
+  return {
+    run:run,
+    isDone:function(){return done;},
+    isRunning:function(){return running;},
+    inView:function(){
+      var r=machine.getBoundingClientRect();
+      return r.top<window.innerHeight*.85&&r.bottom>window.innerHeight*.15;
+    }
+  };
+})();
+
+/* ───── presenter keys ───── */
+(function(){
+  var ids=['#hero','#ch1','#ch2','#ch3','#ch4','#ch5','#ch6','#outro'];
+  var secs=ids.map(function(id){return document.querySelector(id);});
+  function current(){
+    var y=window.scrollY+window.innerHeight*.35,idx=0;
+    secs.forEach(function(s,i){if(s.offsetTop<=y)idx=i;});
+    return idx;
+  }
+  function go(d){
+    var i=Math.max(0,Math.min(secs.length-1,current()+d));
+    window.scrollTo({top:secs[i].offsetTop,behavior:'smooth'});
+  }
+  document.addEventListener('keydown',function(e){
+    var next=(e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '||e.key==='Spacebar');
+    var prev=(e.key==='ArrowUp'||e.key==='PageUp');
+    if(next||prev){
+      if(Machine.isRunning()&&Machine.inView()){e.preventDefault();return;}
+      if(next&&!Machine.isDone()&&Machine.inView()){e.preventDefault();Machine.run();return;}
+      e.preventDefault(); go(next?1:-1); return;
+    }
+    if(/^[0-7]$/.test(e.key)){e.preventDefault();window.scrollTo({top:secs[+e.key].offsetTop,behavior:'smooth'});}
+    if(e.key==='Home'){e.preventDefault();window.scrollTo({top:0,behavior:'smooth'});}
+    if(e.key==='End'){e.preventDefault();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});}
+  });
+})();
+</script>
+</body>
+</html>
